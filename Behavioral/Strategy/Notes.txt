@@ -1,0 +1,59 @@
+The Strategy pattern is a behavioral design pattern that defines a family of algorithms, encapsulate each
+one and make them interchangeable. Strategy lets the algorithm vary independently of client that uses it.
+The pattern allows the client to select and change the algorithm at runtime without changing the context class
+that uses it. This promotes flexibility, maintainability, and adherence to the Open/Closed Principle.
+
+Participants
+• Strategy (Compositor)
+    - declares an interface common to all supported algorithms.
+      Context uses this interface to call the algorithm defined by a ConcreteStrategy.
+• ConcreteStrategy (SimpleCompositor, TeXCompositor, ArrayCompositor)
+    - implements the algorithm using the Strategy interface.
+• Context (Composition)
+    - is configured with a ConcreteStrategy object.
+    - maintains a reference to a Strategy object.
+    - may define an interface that lets Strategy access its data.
+
+Component	        Description
+Context	            Holds a reference to a Strategy object and delegates the execution of a behavior to it.
+Strategy	        An interface or abstract class defining a common method(s) for all supported
+                    algorithms/behaviors.
+ConcreteStrategy	Classes implementing the Strategy interface with specific algorithm implementations.
+
+Pros
+Flexibility: Algorithms can be selected and switched at runtime.
+Open/Closed Principle: New strategies can be added without modifying the context.
+Simplifies Context: Removes complex conditional statements (if-else, switch).
+Encapsulates Algorithms: Each algorithm has its own class, promoting Single Responsibility.
+Re-usability: Strategies can be reused across different contexts.
+
+Cons
+Increased Number of Classes: Each algorithm requires a separate class, which can increase code base size.
+Clients Must Understand Strategies: The client needs knowledge of different strategy implementations.
+Communication Overhead: Context and strategy objects must communicate, adding a layer of indirection.
+Potential Complexity: Overkill for simple or rarely changing algorithms.
+
+Edge Cases and Solutions
+1. Multiple Strategies with Similar Data
+Problem: Strategies require similar data but with varying parameters.
+Solution: Use a common data object or parameter object pattern to package and pass data to strategy methods.
+
+2. Switching Strategies During Execution
+Problem: In some cases, strategy may need to be switched dynamically multiple times.
+Solution: Provide setter methods in context and ensure state consistency when switching strategies.
+
+3. Choosing Strategy Based on External Factors
+Problem: Client code becomes cluttered deciding which strategy to choose.
+Solution: Use a Factory or a Strategy Selector class to encapsulate strategy selection logic.
+
+4. Complexity with Many Strategies
+Problem: Too many concrete strategies may complicate maintenance.
+Solution: Group related strategies or combine with other patterns like Decorator or Composite.
+
+5. Parameterized Strategies
+Problem: Need to parameterize strategies at runtime.
+Solution: Pass strategy-specific parameters to the constructor or method of each strategy implementation.
+
+6. Strategy Sharing State
+Problem: If strategies share mutable states, thread-safety issues may arise.
+Solution: Design strategies as stateless or use synchronized/shared state management.

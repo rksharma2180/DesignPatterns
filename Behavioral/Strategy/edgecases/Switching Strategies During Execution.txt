@@ -1,0 +1,258 @@
+Edge Case: Switching Strategies During Execution
+Problem:
+When a context dynamically switches between different strategy implementations during its lifecycle, especially if
+strategies maintain internal state, switching can lead to inconsistent or corrupted state, unexpected behavior, or data
+loss.
+
+Example issues:
+Strategy A accumulates or caches data; switching to Strategy B abruptly loses that data.
+Strategies expect certain initialization or cleanup steps before and after execution.
+Partial execution under one strategy, then switching, leaves the system in an invalid state.
+
+Solution Approaches
+1. Reset or Clear State on Strategy Switch
+Ensure that when switching strategies, any existing state or data specific to the old strategy is cleared or reset to
+avoid carry-over corruption.
+
+class Context {
+    private Strategy strategy;
+
+    public void setStrategy(Strategy newStrategy) {
+        if (strategy != null) {
+            strategy.cleanup(); // Clear or finalize old state
+        }
+        this.strategy = newStrategy;
+        strategy.init();        // Prepare new strategy if needed
+    }
+
+    public void execute() {
+        strategy.execute();
+    }
+}
+Where strategies implement optional lifecycle methods (init(), cleanup()) to manage their internal states.
+
+2. Design Strategies as Stateless or Immutable
+Keep strategies free from mutable internal state, having all necessary data passed in per method call.
+This eliminates issues caused by switching.
+
+interface Strategy {
+    void execute(Data input);
+}
+
+3. Use State Management Outside Strategies
+If mutable state is needed, let the context maintain the state externally and pass it to the strategy methods.
+The context can ensure consistency even when strategies switch.
+
+class Context {
+    private Strategy strategy;
+    private ContextState state = new ContextState();
+
+    public void setStrategy(Strategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public void execute() {
+        strategy.execute(state);
+    }
+}
+
+4. Restrict Strategy Switching
+If stateful strategies make switching too complex, restrict switching at runtime; require a reset or new context
+instance to change strategies safely.
+
+interface Strategy {
+    void init();
+    void execute();
+    void cleanup();
+}
+
+class StrategyA implements Strategy {
+    private List<String> data = new ArrayList<>();
+
+    public void init() {
+        data.clear();
+        System.out.println("Strategy A initialized");
+    }
+
+    public void execute() {
+        data.add("action");
+        System.out.println("Executing Strategy A with data size " + data.size());
+    }
+
+    public void cleanup() {
+        data.clear();
+        System.out.println("Strategy A cleaned up");
+    }
+}
+
+class Context {
+    private Strategy strategy;
+
+    public void setStrategy(Strategy strategy) {
+        if (this.strategy != null) {
+            this.strategy.cleanup();
+        }
+        this.strategy = strategy;
+        this.strategy.init();
+    }
+
+    public void execute() {
+        if (strategy == null) {
+            throw new IllegalStateException("No strategy set");
+        }
+        strategy.execute();
+    }
+}
+
+// Usage
+Context ctx = new Context();
+ctx.setStrategy(new StrategyA());
+ctx.execute();
+
+ctx.setStrategy(new StrategyB()); // Assume StrategyB implements Strategy with init/cleanup
+ctx.execute();
+
+Summary
+Always clean up old strategy state before switching.
+Use stateless strategies where possible.
+Manage shared or mutable state outside strategies in the context.
+Limit switching frequency if state consistency is critical.
+
+Problem Example: Inconsistent State When Switching Strategies Mid-Execution
+// Strategy interface
+interface PaymentStrategy {
+    void pay(double amount);
+}
+
+// Concrete strategy that accumulates some state
+class CreditCardPayment implements PaymentStrategy {
+    private List<String> transactionLog = new ArrayList<>();
+
+    @Override
+    public void pay(double amount) {
+        transactionLog.add("Paid " + amount + " by Credit Card");
+        System.out.println(transactionLog.get(transactionLog.size() - 1));
+    }
+
+    public List<String> getTransactionLog() {
+        return transactionLog;
+    }
+}
+
+// Another strategy that does not manage state similarly
+class PaypalPayment implements PaymentStrategy {
+    @Override
+    public void pay(double amount) {
+        System.out.println("Paid " + amount + " using PayPal");
+    }
+}
+
+// Context
+class PaymentContext {
+    private PaymentStrategy strategy;
+
+    public void setStrategy(PaymentStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public void pay(double amount) {
+        strategy.pay(amount);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        PaymentContext context = new PaymentContext();
+
+        CreditCardPayment ccPayment = new CreditCardPayment();
+        context.setStrategy(ccPayment);
+        context.pay(100);  // Logs payment in CreditCardPayment
+
+        // Switch to Paypal mid-execution
+        context.setStrategy(new PaypalPayment());
+        context.pay(50);   // No access to previous logs
+
+        // User switches back to Credit Card strategy
+        context.setStrategy(ccPayment);
+        context.pay(30);   // TransactionLog now inconsistent or partial
+
+        System.out.println("Transaction log size: " + ccPayment.getTransactionLog().size());
+        // Outputs 2, but between those payments, Paypal strategy was used without record
+    }
+}
+Explanation
+The CreditCardPayment strategy accumulates a transaction log internally.
+When switching to PaypalPayment, which doesn’t share or maintain the same state, the context loses continuity.
+Switching back to CreditCardPayment causes a discontinuity in the log or other internal state.
+This inconsistency can lead to incorrect behaviors, incomplete data, or bugs.
+
+Why is this a problem?
+Dynamic switching of stateful strategies without proper state management causes unexpected or corrupted states,
+violating client expectations of behavior consistency.
+
+Solution: Maintain Shared State Outside Strategies in Context
+Instead of each strategy maintaining its own internal state, move shared state (like transactionLog) to the context.
+Strategies focus purely on behavior, referencing shared state held by the context.
+
+interface PaymentStrategy {
+    void pay(double amount, List<String> transactionLog);
+}
+
+class CreditCardPayment implements PaymentStrategy {
+    public void pay(double amount, List<String> transactionLog) {
+        transactionLog.add("Paid " + amount + " by Credit Card");
+        System.out.println(transactionLog.get(transactionLog.size() - 1));
+    }
+}
+
+class PaypalPayment implements PaymentStrategy {
+    public void pay(double amount, List<String> transactionLog) {
+        transactionLog.add("Paid " + amount + " using PayPal");
+        System.out.println(transactionLog.get(transactionLog.size() - 1));
+    }
+}
+
+class PaymentContext {
+    private PaymentStrategy strategy;
+    private List<String> transactionLog = new ArrayList<>();
+
+    public void setStrategy(PaymentStrategy strategy) {
+        this.strategy = strategy;
+        // No state reset; preserve transactionLog
+    }
+
+    public void pay(double amount) {
+        if (strategy == null) {
+            throw new IllegalStateException("Strategy not set");
+        }
+        strategy.pay(amount, transactionLog);
+    }
+
+    public List<String> getTransactionLog() {
+        return transactionLog;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        PaymentContext context = new PaymentContext();
+
+        context.setStrategy(new CreditCardPayment());
+        context.pay(100);  // Logs Credit Card payment
+
+        context.setStrategy(new PaypalPayment());
+        context.pay(50);   // Logs PayPal payment
+
+        context.setStrategy(new CreditCardPayment());
+        context.pay(30);   // Logs Credit Card payment again
+
+        // Transaction log preserves all
+        System.out.println("Transaction Log:");
+        context.getTransactionLog().forEach(System.out::println);
+    }
+}
+Explanation
+transactionLog is now owned and maintained by PaymentContext.
+Strategies receive shared state via method parameters; they do not hold state internally.
+Switching strategies does not lose historical data.
+Strategies remain stateless and reusable, simplifying thread safety.

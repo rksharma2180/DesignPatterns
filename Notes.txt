@@ -1,0 +1,2 @@
+The design patterns are language independent strategies for solving common object-oriented
+design problems.

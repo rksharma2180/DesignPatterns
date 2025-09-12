@@ -1,0 +1,70 @@
+Edge Case: Multiple Strategies with Similar but Varying Data Inputs
+
+Problem: Different strategies implementing the same interface might need different, but overlapping,
+sets of input parameters. Passing parameters individually leads to messy method signatures and
+brittle code.
+
+Example: Different sorting strategies might need extra parameters
+(e.g., locale for string comparison, precision for numeric sorting).
+
+Solution: Use a parameter object—a common data carrier that encapsulates all parameters.
+Strategies extract only what they need, promoting extensibility and clean interfaces.
+
+// Common parameter object carrying diverse data
+public class PaymentContext {
+    private String currency;
+    private double amount;
+    private String countryCode;
+    private String paymentMethod;
+    private Map<String, Object> additionalData = new HashMap<>();
+
+    // Getters and setters...
+
+    public <T> void putAdditionalData(String key, T value) {
+        additionalData.put(key, value);
+    }
+
+    public <T> T getAdditionalData(String key, Class<T> clazz) {
+        return clazz.cast(additionalData.get(key));
+    }
+}
+
+// Strategy interface using the parameter object
+public interface PaymentStrategy {
+    void pay(PaymentContext context);
+}
+
+// Concrete strategy needing currency and amount
+public class CreditCardPaymentStrategy implements PaymentStrategy {
+    public void pay(PaymentContext context) {
+        System.out.println("Processing credit card payment: "
+                + context.getAmount() + " " + context.getCurrency());
+        // Use only needed fields
+    }
+}
+
+// Strategy needing countryCode as well
+public class PaypalPaymentStrategy implements PaymentStrategy {
+    public void pay(PaymentContext context) {
+        System.out.println("Processing PayPal payment for country: "
+                + context.getCountryCode() + ", amount: " + context.getAmount());
+    }
+}
+
+// Usage
+PaymentContext context = new PaymentContext();
+context.setAmount(100.0);
+context.setCurrency("USD");
+context.setCountryCode("US");
+
+PaymentStrategy strategy = new CreditCardPaymentStrategy();
+strategy.pay(context);
+
+strategy = new PaypalPaymentStrategy();
+strategy.pay(context);
+
+Benefits
+Method signatures stay uniform.
+Adding new data fields won’t break existing strategies.
+Strategies can pull only parameters they care about.
+The context object can be enriched over time without interface changes.
