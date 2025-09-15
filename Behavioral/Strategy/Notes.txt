@@ -57,3 +57,205 @@ Solution: Pass strategy-specific parameters to the constructor or method of each
 6. Strategy Sharing State
 Problem: If strategies share mutable states, thread-safety issues may arise.
 Solution: Design strategies as stateless or use synchronized/shared state management.
+
+Example: Spring Framework with Strategy Pattern
+Spring’s powerful Dependency Injection (DI) and Autowiring capabilities simplify Strategy pattern
+implementation and registration.
+
+// Strategy Interface
+public interface NotificationStrategy {
+    void notifyUser(String message);
+}
+
+// Concrete Strategies
+@Component("emailStrategy")
+public class EmailNotification implements NotificationStrategy {
+    @Override
+    public void notifyUser(String message) {
+        System.out.println("Email sent: " + message);
+    }
+}
+
+@Component("smsStrategy")
+public class SmsNotification implements NotificationStrategy {
+    @Override
+    public void notifyUser(String message) {
+        System.out.println("SMS sent: " + message);
+    }
+}
+
+// Context using Spring DI to select strategy
+@Component
+public class NotificationService {
+    private final Map<String, NotificationStrategy> strategies;
+
+    @Autowired
+    public NotificationService(Map<String, NotificationStrategy> strategies) {
+        this.strategies = strategies;
+    }
+
+    public void sendNotification(String type, String message) {
+        NotificationStrategy strategy = strategies.get(type);
+        if (strategy == null) throw new IllegalArgumentException("Unknown strategy type");
+        strategy.notifyUser(message);
+    }
+}
+
+@Autowired
+NotificationService notificationService;
+
+public void process() {
+    notificationService.sendNotification("emailStrategy", "Hello via Email!");
+    notificationService.sendNotification("smsStrategy", "Hello via SMS!");
+}
+
+Strategies are registered as Spring beans and automatically discovered.
+Context dynamically selects and executes the strategy by key.
+Easy to extend by adding new beans without modifying existing code.
+
+Service Discovery Frameworks Enabling Dynamic Strategy Selection at System Level
+Real-world Context
+In distributed microservices or plugin-based systems:
+Different service instances implement distinct strategies (algorithms, business logic).
+Clients locate (discover) the appropriate service dynamically via service discovery registries instead of hardcoding
+addresses.
+This supports horizontal scaling, failover, and dynamic routing.
+
+Example: Using Spring Cloud Netflix Eureka for Strategy Discovery
+Microservices register their strategy implementation endpoints to Eureka registry.
+Client microservice queries Eureka to discover the proper strategy based on criteria (region, version, load).
+Client calls strategy service endpoint dynamically.
+
+Workflow:
+Strategy Microservices:
+Implement a common REST API serving as the Strategy interface.
+Register with Eureka under different service IDs or metadata tags.
+
+Client Microservice:
+Queries Eureka registry to find suitable strategy implementation URL.
+Calls via REST or messaging dynamically.
+
+Dynamic Strategy:
+At runtime, client dynamically picks strategy service instance.
+Enables load balancing and failover out-of-the-box.
+
+Benefits at System Level
+Decouples client from concrete strategy implementations and locations.
+Dynamically adapts to deployment topology and runtime conditions.
+Supports polymorphism and extensibility distributed across services.
+
+Aspect	                Application Level	                                System (Distributed) Level
+Strategy locations	    In-process classes/beans	                        Separate microservice instances
+Strategy registration	DI containers (Spring beans), classpath scanning	Service registries (Eureka, Consul, Zookeeper)
+Strategy discovery	    Autowiring, configuration	                        Runtime registry queries by service ID or metadata
+Strategy selection	    By key/name in DI container	                        By service metadata, availability, versioning
+Benefits	            Simplifies code, ensures extensibility	            Enables dynamic, scalable, fault-tolerant systems
+
+Here is a detailed example illustrating both:
+Strategy pattern implementation in Spring using DI for registration and selection.
+Distributed strategy discovery using Spring Cloud Eureka microservices.
+
+1. Spring Strategy Pattern with DI — Registration & Dynamic Selection
+Components:
+Strategy interface
+Multiple concrete strategies registered as Spring beans
+Context service that autowires all strategies and picks at runtime
+
+// Strategy interface
+public interface PaymentStrategy {
+    void pay(int amount);
+}
+
+// Concrete strategies
+@Component("creditCard")
+public class CreditCardPayment implements PaymentStrategy {
+    @Override
+    public void pay(int amount) {
+        System.out.println("Paid " + amount + " using Credit Card.");
+    }
+}
+
+@Component("paypal")
+public class PaypalPayment implements PaymentStrategy {
+    @Override
+    public void pay(int amount) {
+        System.out.println("Paid " + amount + " using PayPal.");
+    }
+}
+
+// Context service selecting strategy dynamically by name
+@Service
+public class PaymentService {
+    private final Map<String, PaymentStrategy> strategies;
+
+    @Autowired
+    public PaymentService(Map<String, PaymentStrategy> strategies) {
+        this.strategies = strategies;
+    }
+
+    public void processPayment(String strategyKey, int amount) {
+        PaymentStrategy strategy = strategies.get(strategyKey);
+        if (strategy == null) throw new IllegalArgumentException("Invalid payment strategy");
+        strategy.pay(amount);
+    }
+}
+
+@Autowired
+PaymentService paymentService;
+
+paymentService.processPayment("creditCard", 100);
+paymentService.processPayment("paypal", 200);
+
+2. Dynamic Distributed Strategy Discovery with Spring Cloud Eureka
+Service A: Strategy Microservice Registration
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@RestController
+public class CreditCardPaymentService {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CreditCardPaymentService.class, args);
+    }
+
+    @RequestMapping("/pay")
+    public String pay(@RequestParam int amount) {
+        return "Paid " + amount + " by Credit Card Microservice";
+    }
+}
+Service declares dependency on spring-cloud-starter-netflix-eureka-client.
+Registers itself with Eureka server during startup.
+
+Service B: Client Microservice - Strategy Discovery and Invocation
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@RestController
+public class PaymentClientService {
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+    @RequestMapping("/processPayment")
+    public String processPayment(@RequestParam String strategy, @RequestParam int amount) {
+        List<ServiceInstance> instances = discoveryClient.getInstances(strategy);
+
+        if (instances == null || instances.isEmpty()) {
+            return "No available instances for strategy: " + strategy;
+        }
+
+        ServiceInstance serviceInstance = instances.get(0);  // simple load balancing
+
+        String url = serviceInstance.getUri().toString() + "/pay?amount=" + amount;
+        RestTemplate restTemplate = new RestTemplate();
+
+        return restTemplate.getForObject(url, String.class);
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(PaymentClientService.class, args);
+    }
+}
+strategy parameter corresponds to the registered service name (e.g., "creditCardPaymentService").
+Uses Eureka client to discover service instances dynamically.
+Invokes the discovered strategy via REST.
