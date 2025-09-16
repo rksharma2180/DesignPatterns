@@ -12,7 +12,7 @@ public class ComparatorDemo {
 
         //Reverse Comparator
         context.setComparator(new ConcreteComparatorRev<>());
-        
+
         String [] strs = { "z", "a", "p", "b"};
 
         Arrays.sort(strs, context::compare);

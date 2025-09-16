@@ -1,0 +1,65 @@
+The Singleton pattern ensures exactly one instance of a class and provides a global access point to it,
+which is useful for coordinating access to shared resources but must be implemented with care to avoid testability,
+concurrency, and lifecycle pitfalls. In Java, the safest implementations are the enum-based singleton or the Bill
+Pugh “initialization-on-demand holder” idiom, with attention to serialization, reflection, and classloader edge
+cases in real systems.
+
+Singleton solves two problems: guaranteeing a single instance for a shared resource and offering a controlled global
+access point without exposing a mutable global variable that can be overwritten accidentally
+
+Typical use cases include centralized configuration, logging appenders, metrics registries, caches, thread pools, and
+database connection factories where only one object should coordinate access across subsystems.
+
+Eager initialization (simple, thread-safe by class loading):
+public class EagerSingleton {
+    private static final EagerSingleton INSTANCE = new EagerSingleton();
+    private EagerSingleton() {}
+    public static EagerSingleton getInstance() { return INSTANCE; }
+}
+This is safe because class initialization in Java is serialized by the JVM but may initialize even if never used, which
+ can be wasteful for heavy objects.
+
+Lazy with synchronized (safe but slower under contention):
+public class SyncSingleton {
+    private static SyncSingleton instance;
+    private SyncSingleton() {}
+    public static synchronized SyncSingleton getInstance() {
+        if (instance == null) instance = new SyncSingleton();
+        return instance;
+    }
+}
+Synchronizing the accessor prevents races but adds per-call overhead on hot paths.
+Double-checked locking with volatile (modern, low overhead):
+
+public class DclSingleton {
+    private static volatile DclSingleton instance;
+    private DclSingleton() {}
+    public static DclSingleton getInstance() {
+        if (instance == null) {
+            synchronized (DclSingleton.class) {
+                if (instance == null) instance = new DclSingleton();
+            }
+        }
+        return instance;
+    }
+}
+The volatile field prevents instruction reordering and guarantees visibility per the post–Java 5 memory model;
+ without volatile this pattern is broken and can expose half-initialized instances.
+
+Bill Pugh “Initialization-on-demand holder” (preferred lazy singleton):
+public class HolderSingleton {
+    private HolderSingleton() {}
+    private static class Holder { static final HolderSingleton INSTANCE = new HolderSingleton(); }
+    public static HolderSingleton getInstance() { return Holder.INSTANCE; }
+}
+This leverages class initialization guarantees to achieve lazy, thread-safe instantiation with no synchronization on
+fast paths, and is widely recommended as a best practice for Java singletons.
+
+Enum singleton (preferred for robust serialization/reflection safety):
+public enum EnumSingleton {
+    INSTANCE;
+    // fields and methods
+}
+A single-element enum provides built-in serialization machinery and immunity to most reflection attacks, and is the
+approach recommended by Effective Java for bulletproof singletons in Java.
+
