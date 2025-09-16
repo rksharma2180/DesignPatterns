@@ -63,3 +63,23 @@ public enum EnumSingleton {
 A single-element enum provides built-in serialization machinery and immunity to most reflection attacks, and is the
 approach recommended by Effective Java for bulletproof singletons in Java.
 
+Explain JVM class-loading steps that ensure enum initialization safety
+How Java memory model guarantees safe publication of enum instances
+Show bytecode generated for an enum and its static init block
+Compare enum initialization with static final fields for singletons
+Provide code demonstrating a race that enums prevent and why
+What JVM class loading step deals with static initializers
+How does verification prevent corrupted enum class files
+What is the role of defineClass in enum loading
+How does class linking prepare enums for execution
+Can loadClass be used to manipulate enum initialization
+Show the bytecode for enum static initialization and explain fences
+Compare enum safe publication to double-checked locking singleton
+Which class-loader steps enforce enum initialization synchronization
+How JVM handles enum values() array and its visibility guarantees
+Provide a minimal Java race that enums prevent and explain outcomes
+Show disassembled bytecode for a simple Java enum class with values array
+Explain the memory model guarantees for enum values() publication
+Compare enum static init fences with final-field semantics
+Provide a minimal JVM-level race that breaks non-volatile array publication
+How class initialization lock interacts with enum static initialization

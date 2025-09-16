@@ -8,7 +8,6 @@ public class Employee implements Cloneable, Serializable {
     private static int i = 1;
     private static Employee emp = new Employee();
     private Employee() {
-
         if (Objects.nonNull(emp)){
             throw new UnsupportedOperationException();
         }
