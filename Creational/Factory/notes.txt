@@ -1,0 +1,203 @@
+The Factory pattern provides a way to create objects through a dedicated creation API instead of calling
+constructors directly, improving decoupling and making it easier to swap or extend concrete types.
+
+A dedicated creation API is a purpose-built interface or method that constructs and returns objects so
+callers don’t use constructors directly.it centralizes creation logic, selection, validation, and policies behind a
+stable contract.
+
+Why it exists
+Encapsulates object construction so client code depends on abstractions, not concrete classes, enabling swapping
+implementations without touching call sites.
+Centralizes cross‑cutting concerns at creation time (validation, caching/pooling, configuration, telemetry,
+retries), improving consistency and testability.
+
+Static factory methods
+Example: parse/of/from/getInstance/newInstance
+naming conveys intent; can return subtypes, cached instances, or pooled objects.
+
+public final class NotifierFactory {
+    public static Notifier of(String channel) {
+        switch (channel.toLowerCase()) {
+            case "email": return new EmailNotifier();
+            case "sms":   return new SmsNotifier();
+            default: throw new IllegalArgumentException("Unknown: " + channel);
+        }
+    }
+}
+
+Factory object (simple factory)
+Useful when creation needs state/config or runtime registration instead of a big switch.
+Code:
+interface Notifier {
+    void send(String msg);
+}
+class Factory {
+    private final Map<String, Supplier<Notifier>> registry = new HashMap<>();
+
+    public Factory register(String key, Supplier<Notifier> sup) {
+        registry.put(key, sup); return this;
+    }
+    public Notifier create(String key) {
+        Supplier<Notifier> s = registry.get(key);
+        if (s == null) throw new IllegalArgumentException("Unknown: " + key);
+        return s.get();
+    }
+}
+
+Factory Method pattern (overridable)
+The base class defines a factory method; subclasses decide which product to create while the base class runs the
+workflow.
+Code:
+interface Parser {
+    String parse(String in);
+}
+abstract class ParserCreator { // Base class
+    protected abstract Parser createParser();
+    public String process(String in) {
+        return createParser().parse(in);
+    }
+}
+class JsonCreator extends ParserCreator { //subclass
+    protected Parser createParser() {
+        return new JsonParser();
+    }
+}
+Provider/DI integration
+A Provider<T> or Supplier<T> is injected and acts as the dedicated creation API, keeping constructors out of
+client logic.
+
+Builder
+For complex construction, a builder is the dedicated API that assembles a valid instance step‑by‑step.
+
+Benefits over directly calling new
+Decoupling and Open/Closed: swap implementations without editing callers; add types by registration rather than wide edits.
+Names and intent: parse, of, from, forConfig(...) are clearer than overloaded constructors and reduce ambiguity.
+Policy enforcement: validate invariants, normalize inputs, attach defaults, inject instrumentation, and manage pooling/caching in one place.
+Test seams: mock the factory/provider to isolate tests, or feed deterministic fakes.
+
+In practice, “Factory pattern” usually refers to two related approaches: the formal Factory Method pattern
+(a creator class exposes an overridable factory method) and the pragmatic “simple factory” or static factory method
+(a utility that returns a subtype based on input).
+
+Factory Method’s intent is to “replace direct object construction with a factory method that subclasses override to
+choose the concrete product,” thereby keeping client code on abstractions and enabling polymorphic product selection.
+
+A “simple factory” encapsulates selection logic (e.g., switch/if) in one place and returns the appropriate subtype,
+keeping callers free of construction conditionals while remaining simpler than Abstract Factory.
+
+When to use
+When client code should depend on interfaces, not concrete classes, and object creation details must be centralized
+or vary by context or configuration.
+When adding new concrete types should not require changing multiple callers, reducing ripple effects and adhering
+to the Open/Closed Principle.
+When readable, named creators (static factories) are preferable to overloaded constructors and may return cached
+instances or subtypes.
+
+Simple factory example (Java)
+This example returns different Notifier implementations from a single place, keeping callers decoupled from concrete
+classes and avoiding scattered switch statements.
+
+interface Notifier { void send(String msg); }
+
+class EmailNotifier implements Notifier {
+    public void send(String msg) { System.out.println("Email: " + msg); }
+}
+
+class SmsNotifier implements Notifier {
+    public void send(String msg) { System.out.println("SMS: " + msg); }
+}
+
+class PushNotifier implements Notifier {
+    public void send(String msg) { System.out.println("Push: " + msg); }
+}
+
+final class NotifierFactory {
+    private NotifierFactory() {}
+    public static Notifier of(String channel) {
+        switch (channel.toLowerCase()) {
+            case "email": return new EmailNotifier();
+            case "sms":   return new SmsNotifier();
+            case "push":  return new PushNotifier();
+            default: throw new IllegalArgumentException("Unknown channel: " + channel);
+        }
+    }
+}
+
+// Usage
+class App {
+    public static void main(String[] args) {
+        Notifier n = NotifierFactory.of("email");
+        n.send("Welcome!");
+    }
+}
+
+Factory Method example (Java)
+Here, the base creator calls a factory method that subclasses override to decide which product to create, enabling
+polymorphic creation while the workflow stays in the base class.
+
+interface Parser { String parse(String input); }
+
+class JsonParser implements Parser {
+    public String parse(String input) { return "JSON parsed"; }
+}
+class XmlParser implements Parser {
+    public String parse(String input) { return "XML parsed"; }
+}
+
+abstract class ParserCreator {
+    // Factory method
+    protected abstract Parser createParser();
+
+    // Template using the factory method
+    public final String process(String input) {
+        Parser p = createParser();
+        return p.parse(input);
+    }
+}
+
+class JsonParserCreator extends ParserCreator {
+    protected Parser createParser() { return new JsonParser(); }
+}
+
+class XmlParserCreator extends ParserCreator {
+    protected Parser createParser() { return new XmlParser(); }
+}
+
+// Usage
+class Demo {
+    public static void main(String[] args) {
+        ParserCreator c = new JsonParserCreator();
+        System.out.println(c.process("{...}"));
+    }
+}
+Edge cases and pitfalls
+“God factory” anti-pattern: a monolithic factory with large switch/if blocks becomes hard to maintain as product
+variants grow; refactor into Factory Method or Abstract Factory when families emerge.
+
+Overuse and indirection: adding factories for trivial types adds complexity without gain; use constructors or simple
+static factories when polymorphism or substitution aren’t needed.
+
+Constructor overload confusion: many overloaded constructors reduce readability; named static factory methods
+(e.g., of, from, parse) improve clarity and can cache or return subtypes.
+
+Violation of Open/Closed with parameter switches: a simple factory that switches on a string/enum requires modification
+ for each new type; prefer registering creators or using Factory Method to extend without editing the central switch.
+
+Testing seam quality: if clients call new directly or rely on concrete types, tests become brittle; exposing factories
+ via interfaces enables mocking and contract tests.
+
+Confusing with Abstract Factory: Factory Method creates a single product per creator, whereas Abstract Factory creates
+ families of related products; use the latter only when multiple related objects must vary together.
+
+Performance micro-pitfalls: unnecessary synchronization inside factories or reflective instantiation can create
+hot-path overhead; keep factories stateless and use direct construction when possible.
+
+Show a concrete example of a dedicated creation API in Java
+How does a dedicated creation API differ from constructors
+Benefits of using a dedicated creation API for thread safety
+Design guidelines for building a dedicated creation API
+Unit tests to verify correctness of a creation API
+
+
+
+

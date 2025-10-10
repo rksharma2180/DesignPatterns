@@ -1,0 +1,52 @@
+Many core Java APIs use a dedicated factory to create instances instead of exposing constructors directly,
+including XML/JAXP factories, crypto/security factories, locale/format factories, concurrency utilities,
+ and calendar/time utilities.
+
+XML and XPath
+javax.xml.parsers.DocumentBuilderFactory provides newInstance and newDocumentBuilder to obtain DOM parsers via a
+pluggable provider mechanism.
+
+javax.xml.xpath.XPathFactory exposes newInstance and newXPath to create XPath evaluators through a provider
+lookup defined by JAXP.
+
+Example usage: obtaining a DOM builder and creating a document builder is done via
+DocumentBuilderFactory.newInstance().newDocumentBuilder(), not by calling any concrete constructor.
+
+Security and crypto
+javax.crypto.Cipher.getInstance selects a Cipher implementation (algorithm/mode/padding) from installed security
+providers; it is a classic static factory method.
+
+java.security.KeyFactory.getInstance returns a KeyFactory for algorithms like RSA/DSA/DH to translate between key
+specs and key objects.
+
+java.security.cert.CertificateFactory.getInstance("X.509") produces parsers for certificates/CRLs/CertPaths
+from encodings such as PKCS7 and PkiPath.
+
+javax.net.ssl.SSLSocketFactory provides getDefault (and is also used via SSLContext) to produce SSLSockets
+through a factory instead of new.
+
+java.util.concurrent.Executors is a factory class with methods like newFixedThreadPool, newCachedThreadPool,
+and newScheduledThreadPool to create ExecutorService/ScheduledExecutorService instances.
+
+var pool = java.util.concurrent.Executors.newFixedThreadPool(8);
+
+The Executor API is intentionally obtained via Executors factories to avoid direct Thread management and to
+allow configuration-by-factory.
+
+Locale and formatting
+java.text.NumberFormat.getInstance/getNumberInstance/getCurrencyInstance return NumberFormat implementations
+appropriate for a given Locale, rather than exposing constructors.
+
+var nf = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.JAPAN);
+
+URLConnection.openConnection and related APIs act as factory methods for protocol-specific connections resolved at runtime.
+
+Using NumberFormat factories keeps formatting/parsing code locale-independent and lets the JDK choose the right
+concrete formatter.
+
+Date/time and calendar
+java.util.Calendar.getInstance returns a Calendar configured for the default or specified Locale/TimeZone;
+callers don’t instantiate concrete Calendar subclasses.
+
+These factories encapsulate provider differences and allow the platform to supply correct calendar
+implementations per locale/zone.
