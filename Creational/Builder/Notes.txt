@@ -1,4 +1,605 @@
 Builder is a creational design pattern that lets you construct complex objects step by step.
 The pattern allows you to produce different types and representations of an object using the same construction code.
 
+Unlike other creational patterns, Builder doesn’t require products to have a common interface.
+That makes it possible to produce different products using the same construction process.
+
 The Builder pattern constructs complex objects step-by-step through a dedicated builder API.
+
+java.lang.StringBuilder#append() (unsynchronized)
+java.lang.StringBuffer#append() (synchronized)
+java.nio.ByteBuffer#put() (also in CharBuffer, ShortBuffer, IntBuffer, LongBuffer, FloatBuffer and DoubleBuffer)
+javax.swing.GroupLayout.Group#addComponent()
+All implementations java.lang.Appendable
+
+Identification: The Builder pattern can be recognized in a class, which has a single creation method and several methods
+to configure the resulting object. Builder methods often support chaining
+(for example, someBuilder.setValueA(1).setValueB(2).create()).
+
+/**
+ * Builder interface defines all possible ways to configure a product.
+ */
+public interface Builder {
+    void setCarType(CarType type);
+    void setSeats(int seats);
+    void setEngine(Engine engine);
+    void setTransmission(Transmission transmission);
+    void setTripComputer(TripComputer tripComputer);
+    void setGPSNavigator(GPSNavigator gpsNavigator);
+}
+
+/**
+ * Concrete builders implement steps defined in the common interface.
+ */
+public class CarBuilder implements Builder {
+    private CarType type;
+    private int seats;
+    private Engine engine;
+    private Transmission transmission;
+    private TripComputer tripComputer;
+    private GPSNavigator gpsNavigator;
+
+    public void setCarType(CarType type) {
+        this.type = type;
+    }
+
+    @Override
+    public void setSeats(int seats) {
+        this.seats = seats;
+    }
+
+    @Override
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+    }
+
+    @Override
+    public void setTransmission(Transmission transmission) {
+        this.transmission = transmission;
+    }
+
+    @Override
+    public void setTripComputer(TripComputer tripComputer) {
+        this.tripComputer = tripComputer;
+    }
+
+    @Override
+    public void setGPSNavigator(GPSNavigator gpsNavigator) {
+        this.gpsNavigator = gpsNavigator;
+    }
+
+    public Car getResult() {
+        return new Car(type, seats, engine, transmission, tripComputer, gpsNavigator);
+    }
+}
+
+/**
+ * Unlike other creational patterns, Builder can construct unrelated products,
+ * which don't have the common interface.
+ *
+ * In this case we build a user manual for a car, using the same steps as we
+ * built a car. This allows to produce manuals for specific car models,
+ * configured with different features.
+ */
+public class CarManualBuilder implements Builder{
+    private CarType type;
+    private int seats;
+    private Engine engine;
+    private Transmission transmission;
+    private TripComputer tripComputer;
+    private GPSNavigator gpsNavigator;
+
+    @Override
+    public void setCarType(CarType type) {
+        this.type = type;
+    }
+
+    @Override
+    public void setSeats(int seats) {
+        this.seats = seats;
+    }
+
+    @Override
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+    }
+
+    @Override
+    public void setTransmission(Transmission transmission) {
+        this.transmission = transmission;
+    }
+
+    @Override
+    public void setTripComputer(TripComputer tripComputer) {
+        this.tripComputer = tripComputer;
+    }
+
+    @Override
+    public void setGPSNavigator(GPSNavigator gpsNavigator) {
+        this.gpsNavigator = gpsNavigator;
+    }
+
+    public Manual getResult() {
+        return new Manual(type, seats, engine, transmission, tripComputer, gpsNavigator);
+    }
+}
+
+/**
+ * Car is a product class.
+ */
+public class Car {
+    private final CarType carType;
+    private final int seats;
+    private final Engine engine;
+    private final Transmission transmission;
+    private final TripComputer tripComputer;
+    private final GPSNavigator gpsNavigator;
+    private double fuel = 0;
+
+    public Car(CarType carType, int seats, Engine engine, Transmission transmission,
+               TripComputer tripComputer, GPSNavigator gpsNavigator) {
+        this.carType = carType;
+        this.seats = seats;
+        this.engine = engine;
+        this.transmission = transmission;
+        this.tripComputer = tripComputer;
+        if (this.tripComputer != null) {
+            this.tripComputer.setCar(this);
+        }
+        this.gpsNavigator = gpsNavigator;
+    }
+
+    public CarType getCarType() {
+        return carType;
+    }
+
+    public double getFuel() {
+        return fuel;
+    }
+
+    public void setFuel(double fuel) {
+        this.fuel = fuel;
+    }
+
+    public int getSeats() {
+        return seats;
+    }
+
+    public Engine getEngine() {
+        return engine;
+    }
+
+    public Transmission getTransmission() {
+        return transmission;
+    }
+
+    public TripComputer getTripComputer() {
+        return tripComputer;
+    }
+
+    public GPSNavigator getGpsNavigator() {
+        return gpsNavigator;
+    }
+}
+
+/**
+ * Car manual is another product. Note that it does not have the same ancestor
+ * as a Car. They are not related.
+ */
+public class Manual {
+    private final CarType carType;
+    private final int seats;
+    private final Engine engine;
+    private final Transmission transmission;
+    private final TripComputer tripComputer;
+    private final GPSNavigator gpsNavigator;
+
+    public Manual(CarType carType, int seats, Engine engine, Transmission transmission,
+                  TripComputer tripComputer, GPSNavigator gpsNavigator) {
+        this.carType = carType;
+        this.seats = seats;
+        this.engine = engine;
+        this.transmission = transmission;
+        this.tripComputer = tripComputer;
+        this.gpsNavigator = gpsNavigator;
+    }
+
+    public String print() {
+        String info = "";
+        info += "Type of car: " + carType + "\n";
+        info += "Count of seats: " + seats + "\n";
+        info += "Engine: volume - " + engine.getVolume() + "; mileage - " + engine.getMileage() + "\n";
+        info += "Transmission: " + transmission + "\n";
+        if (this.tripComputer != null) {
+            info += "Trip Computer: Functional" + "\n";
+        } else {
+            info += "Trip Computer: N/A" + "\n";
+        }
+        if (this.gpsNavigator != null) {
+            info += "GPS Navigator: Functional" + "\n";
+        } else {
+            info += "GPS Navigator: N/A" + "\n";
+        }
+        return info;
+    }
+}
+
+public enum CarType {
+    CITY_CAR, SPORTS_CAR, SUV
+}
+
+public class Engine {
+    private final double volume;
+    private double mileage;
+    private boolean started;
+
+    public Engine(double volume, double mileage) {
+        this.volume = volume;
+        this.mileage = mileage;
+    }
+
+    public void on() {
+        started = true;
+    }
+
+    public void off() {
+        started = false;
+    }
+
+    public boolean isStarted() {
+        return started;
+    }
+
+    public void go(double mileage) {
+        if (started) {
+            this.mileage += mileage;
+        } else {
+            System.err.println("Cannot go(), you must start engine first!");
+        }
+    }
+
+    public double getVolume() {
+        return volume;
+    }
+
+    public double getMileage() {
+        return mileage;
+    }
+}
+
+public class GPSNavigator {
+    private String route;
+
+    public GPSNavigator() {
+        this.route = "221b, Baker Street, London  to Scotland Yard, 8-10 Broadway, London";
+    }
+
+    public GPSNavigator(String manualRoute) {
+        this.route = manualRoute;
+    }
+
+    public String getRoute() {
+        return route;
+    }
+}
+
+public enum Transmission {
+    SINGLE_SPEED, MANUAL, AUTOMATIC, SEMI_AUTOMATIC
+}
+
+public class TripComputer {
+
+    private Car car;
+
+    public void setCar(Car car) {
+        this.car = car;
+    }
+
+    public void showFuelLevel() {
+        System.out.println("Fuel level: " + car.getFuel());
+    }
+
+    public void showStatus() {
+        if (this.car.getEngine().isStarted()) {
+            System.out.println("Car is started");
+        } else {
+            System.out.println("Car isn't started");
+        }
+    }
+}
+
+public class Director {
+
+    public void constructSportsCar(Builder builder) {
+        builder.setCarType(CarType.SPORTS_CAR);
+        builder.setSeats(2);
+        builder.setEngine(new Engine(3.0, 0));
+        builder.setTransmission(Transmission.SEMI_AUTOMATIC);
+        builder.setTripComputer(new TripComputer());
+        builder.setGPSNavigator(new GPSNavigator());
+    }
+
+    public void constructCityCar(Builder builder) {
+        builder.setCarType(CarType.CITY_CAR);
+        builder.setSeats(2);
+        builder.setEngine(new Engine(1.2, 0));
+        builder.setTransmission(Transmission.AUTOMATIC);
+        builder.setTripComputer(new TripComputer());
+        builder.setGPSNavigator(new GPSNavigator());
+    }
+
+    public void constructSUV(Builder builder) {
+        builder.setCarType(CarType.SUV);
+        builder.setSeats(4);
+        builder.setEngine(new Engine(2.5, 0));
+        builder.setTransmission(Transmission.MANUAL);
+        builder.setGPSNavigator(new GPSNavigator());
+    }
+}
+
+
+/**
+ * Demo class. Everything comes together here.
+ */
+public class Demo {
+
+    public static void main(String[] args) {
+        Director director = new Director();
+
+        // Director gets the concrete builder object from the client
+        // (application code). That's because application knows better which
+        // builder to use to get a specific product.
+        CarBuilder builder = new CarBuilder();
+        director.constructSportsCar(builder);
+
+        // The final product is often retrieved from a builder object, since
+        // Director is not aware and not dependent on concrete builders and
+        // products.
+        Car car = builder.getResult();
+        System.out.println("Car built:\n" + car.getCarType());
+
+
+        CarManualBuilder manualBuilder = new CarManualBuilder();
+
+        // Director may know several building recipes.
+        director.constructSportsCar(manualBuilder);
+        Manual carManual = manualBuilder.getResult();
+        System.out.println("\nCar manual built:\n" + carManual.print());
+    }
+}
+Edge Cases in Builder Pattern
+Immutability: Builder pattern helps build immutable objects by setting fields once during construction.​
+Mandatory Fields: It's crucial to distinguish and enforce mandatory fields (typically via the builder’s constructor) to
+avoid incomplete object creation.​
+Optional Fields and Defaults: If some parameters are not set, the builder should provide sensible defaults to avoid
+potential bugs.
+Validation: Validate field combinations inside build() method, or throw exceptions for invalid object states
+(e.g., missing required fields or invalid optional values).
+Misuse Prevention: Builder’s build() method should check for correct configuration and throw exceptions for invalid
+setups.
+Thread Safety: Builders are usually not thread-safe. Avoid sharing Builder instances across threads.​
+Chaining Pitfalls: For fluent APIs, always return this to enable chaining.
+
+Pizza pizza = new Pizza.PizzaBuilder("Large") //Size is mandatory
+    .cheese(true)
+    .pepperoni(true)
+    .olives(false)
+    .build();
+
+Advanced Builder Pattern Interview Questions
+Design and Application
+In what architectural scenarios would you prefer the Builder pattern over Factory or Abstract Factory, and why?
+Explain how the Builder pattern enhances the construction of complex, immutable domain models.
+How does the Builder pattern facilitate separation of concerns in large-scale object construction?
+Can you describe a situation where using the Builder pattern improved code maintainability or clarity in your previous
+projects?
+
+Best Practices
+What strategies would you use to enforce mandatory parameters in a Builder?
+How can you leverage the Builder pattern to create thread-safe, immutable objects? Are there any pitfalls?
+How do you ensure defensive copying for mutable fields in an immutable Builder-based object?
+
+Implementation and Edge Cases
+How do you handle validation logic in a Builder implementation, especially when multiple fields are interdependent?
+How would you modify the Builder pattern if object construction is stateful or context-dependent (e.g., depends on
+environment/resource configuration)?
+Describe how you would implement a Builder to support hierarchical object construction (e.g., building a complex
+composite tree).
+
+API Design and Adaptation
+Discuss the trade-offs between using a fluent Builder and a traditional multi-parameter constructor.
+How can the Builder pattern be used for backward-compatible API evolution in large enterprise systems?
+Describe how you’d extend a Builder for inheritance in a class hierarchy, and how to avoid code duplication or builder
+type leakage.
+
+Effective Java and Industry Standards
+Cite and explain the recommendations related to Builder pattern from "Effective Java."
+Can you discuss real-world Java API examples (such as in Java Streams, Optional, or JDK libraries) that use the Builder
+pattern or closely related ideas?
+
+Practical Scenarios
+Suppose you have to serialize and deserialize objects built using the Builder pattern. How would you design for
+immutability, yet ensure easy (de)serialization?
+How would you integrate the Builder pattern with dependency injection frameworks such as Spring, especially for beans
+with mandatory constructor arguments?
+Can you combine the Builder pattern with the Prototype pattern for cloning complex objects? If yes, how?
+
+In what architectural scenarios would you prefer the Builder pattern over Factory or Abstract Factory, and why?
+The Builder pattern is ideal when objects are complex, mutable during construction but need to be immutable after
+creation, and have numerous optional or combinatorial configuration parameters.
+
+Unlike Factory patterns, which focus on object creation without managing the complexity or configuration, Builder allows
+ step-by-step construction and can enforce mandatory vs. optional fields and validation.
+
+Example: Constructing a complex Invoice object requiring mandatory customer information and optional discounts, taxes,
+ shipping details.
+
+Explain how the Builder pattern enhances the construction of complex, immutable domain models.
+Builder separates construction logic from domain modeling and guarantees immutability.
+By only exposing getters and making all fields final, the object is thread-safe and unchangeable after construction.
+
+Example:
+public final class Invoice {
+    private final String customerName;
+    private final double amount;
+    private final double discount;
+
+    private Invoice(Builder builder) {
+        this.customerName = builder.customerName;
+        this.amount = builder.amount;
+        this.discount = builder.discount;
+    }
+    public static class Builder {
+        private String customerName;
+        private double amount;
+        private double discount;
+        public Builder customerName(String name) { this.customerName = name; return this; }
+        public Builder amount(double amt) { this.amount = amt; return this; }
+        public Builder discount(double discount) { this.discount = discount; return this; }
+        public Invoice build() { return new Invoice(this); }
+    }
+}
+Invoice inv = new Invoice.Builder().customerName("Acme Inc").amount(1000).discount(100).build();
+This example guarantees immutability and flexibility.
+
+How does the Builder pattern facilitate separation of concerns in large-scale object construction?
+Construction logic moves to the Builder, while the domain object focuses just on state and behavior.
+Builder encapsulates validation, default values, and optional configuration; the final object exposes only intended APIs.
+Example: Complex objects like Order having Address, LineItem etc. Each can have its own Builder.
+
+Can you describe a situation where using the Builder pattern improved code maintainability or clarity in your previous
+projects?
+Example: In an enterprise payment platform, building Transaction objects required many optional settings for currency,
+chargebacks, discounts, and auditors.
+Builder pattern removed telescoping constructors, supported validation, and improved readability, making onboarding for
+new developers faster.
+
+What strategies would you use to enforce mandatory parameters in a Builder?
+Require mandatory parameters in the Builder’s constructor.
+Validate in the build() method for correctness.
+Example:
+public static class Builder {
+    private final String customerName; // Mandatory
+    private double amount;
+    public Builder(String customerName) { this.customerName = customerName; }
+    public Builder amount(double amt) { this.amount = amt; return this; }
+    public Invoice build() {
+        if (customerName == null) throw new IllegalStateException("Customer name required");
+        return new Invoice(this);
+    }
+}
+
+How can you leverage the Builder pattern to create thread-safe, immutable objects? Are there any pitfalls?
+Make all fields final and only set in constructor; do not expose setters in the object.
+Builder should not be shared across threads (not thread-safe), but the built object is safe.
+Pitfall: Sharing a Builder instance between threads causes race conditions and incorrect values.
+Example: Address class from previous answer guarantees this immutability and safety.
+
+How do you ensure defensive copying for mutable fields in an immutable Builder-based object?
+Create a copy of mutable objects when assigning from Builder to the final object.
+
+Example:
+java
+public final class Employee {
+    private final List<String> skills;
+    private Employee(Builder b) {
+        this.skills = new ArrayList<>(b.skills); // Defensive copy
+    }
+}
+
+How do you handle validation logic in a Builder implementation, especially when multiple fields are interdependent?
+Add validation in the build() method before object construction.
+Throw exceptions if dependent invariants are violated.
+
+Example:
+public Employee build() {
+    if (age < 18 && isManager) {
+        throw new IllegalArgumentException("Managers must be at least 18.");
+    }
+    return new Employee(this);
+}
+
+How would you modify the Builder pattern if object construction is stateful or context-dependent
+(e.g., depends on environment/resource configuration)?
+Pass a context or environment configuration object into the builder.
+Example: DatabaseConnection.Builder(environment.getUrl(), environment.getCredentials());
+Context-aware Builders adapt behavior or values based on passed resources.
+
+Describe how you would implement a Builder to support hierarchical object construction (e.g., building a complex
+composite tree).
+Each nested component should have its own Builder.
+Parent Builder creates child objects using child Builders, combining them, before building the entire composite object.
+
+Example:
+Tree tree = new Tree.Builder()
+    .root(new Node.Builder().value("root").build())
+    .addChild(new Node.Builder().value("child1").build())
+    .build();
+
+Discuss the trade-offs between using a fluent Builder and a traditional multi-parameter constructor.
+| Aspect       | Fluent Builder        | Multi-Parameter Constructor |
+| ------------ | --------------------- | --------------------------- |
+| Readability  | High                  | Low (telescoping, unclear)  |
+| Flexibility  | High (optional/chain) | Low                         |
+| Immutability | Good                  | Varies                      |
+| Maintenance  | High                  | Hard (order, overload)      |
+
+Builders prevent constructor overload issues and help code self-document, while multi-parameter constructors often lead
+to error-prone code.
+
+How can the Builder pattern be used for backward-compatible API evolution in large enterprise systems?
+Add new optional fields or methods to Builder without changing existing constructors or callers.
+Existing callers see no impact; new features are additive and backward compatible.
+
+Describe how you’d extend a Builder for inheritance in a class hierarchy, and how to avoid code duplication or builder
+type leakage.
+Use recursive generics (T extends Builder<T>) for fluent chaining in hierarchies.
+
+Example:
+public abstract class BaseBuilder<T extends BaseBuilder<T>> {
+    public T withId(int id) { /* ... */ return (T) this; }
+}
+public class UserBuilder extends BaseBuilder<UserBuilder> { /* ... */ }
+Avoid duplication by factoring out common Builder logic in a base Builder class.
+
+Cite and explain the recommendations related to Builder pattern from "Effective Java."
+Item 2 of "Effective Java": Use Builder for classes with many parameters to reduce constructor telescoping and improve
+usability and clarity.
+
+Joshua Bloch recommends this especially if class is immutable and most parameters are optional.
+
+Can you discuss real-world Java API examples (such as in Java Streams, Optional, or JDK libraries)
+that use the Builder pattern or closely related ideas?
+StringBuilder, StringBuffer use Builder-like chaining for complex data construction.
+JDK java.time.format.DateTimeFormatterBuilder follows Builder pattern for constructing formatters.
+Many Java APIs use fluent builders (Stream.Builder, Collectors.toList() with chainable configuration).
+
+Suppose you have to serialize and deserialize objects built using the Builder pattern. How would you design for
+immutability, yet ensure easy (de)serialization?
+Use libraries like Jackson: annotate only constructor/final fields.
+Reconstruct objects using Builder on deserialization (@JsonPOJOBuilder in Jackson).
+
+Example:
+@JsonDeserialize(builder = Address.Builder.class)
+public final class Address { /* ... */ }
+
+Jackson can recreate immutable objects from JSON by invoking Builder setters.
+
+How would you integrate the Builder pattern with dependency injection frameworks such as Spring, especially for beans
+with mandatory constructor arguments?
+Use Builder for configuration, then inject built instance as singleton bean.
+
+For mandatory args, let Builder construct and validate, then provide result to DI for injection.
+Example: Spring configuration:
+@Bean
+public Service service() {
+    return new Service.Builder(mandatoryArg).configOption(x).build();
+}
+Can you combine the Builder pattern with the Prototype pattern for cloning complex objects? If yes, how?
+Yes—implement a toBuilder() method in your class, which populates a Builder from an object's current state.
+Modify fields as needed, then call build() to create a copy.
+Example:
+public Builder toBuilder() {
+    return new Builder().city(this.city).state(this.state);
+}
+Allows safe object copying with changed configuration.

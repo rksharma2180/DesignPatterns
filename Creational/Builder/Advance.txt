@@ -1,0 +1,60 @@
+Show a fluent Builder example with immutability guarantees
+
+public final class Address {
+    private final String city;
+    private final String state;
+    private final String country;
+    private final String postalCode;
+
+    // Private constructor, only accessible from Builder
+    private Address(Builder builder) {
+        this.city = builder.city;
+        this.state = builder.state;
+        this.country = builder.country;
+        this.postalCode = builder.postalCode;
+    }
+
+    public String getCity() { return city; }
+    public String getState() { return state; }
+    public String getCountry() { return country; }
+    public String getPostalCode() { return postalCode; }
+
+    public static class Builder {
+        private String city;
+        private String state;
+        private String country;
+        private String postalCode;
+
+        public Builder city(String city) {
+            this.city = city;
+            return this;
+        }
+        public Builder state(String state) {
+            this.state = state;
+            return this;
+        }
+        public Builder country(String country) {
+            this.country = country;
+            return this;
+        }
+        public Builder postalCode(String postalCode) {
+            this.postalCode = postalCode;
+            return this;
+        }
+        public Address build() {
+            // Defensive copying and validation possible here
+            return new Address(this);
+        }
+    }
+}
+
+Address address = new Address.Builder()
+    .city("Bangalore")
+    .state("Karnataka")
+    .country("India")
+    .postalCode("560001")
+    .build();
+
+Immutability: The main Address object is final, fields are final, no setters are exposed on Address after construction.
+Fluent API: The Builder methods all return this, enabling chained calls.
+Safety: Only Builder sets fields, and build() constructs the immutable result.
