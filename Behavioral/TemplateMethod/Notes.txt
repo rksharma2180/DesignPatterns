@@ -1,0 +1,142 @@
+Template Method is a behavioral design pattern that defines the skeleton of an algorithm (fixed sequence) in the
+superclass but lets subclasses override specific steps of the algorithm without changing its structure.
+
+The Template Method pattern suggests that you break down
+an algorithm into a series of steps, turn these steps into methods, and put a series of calls to these methods inside a
+ single “template method.” The steps may either be abstract , or have some default implementation. To use the algorithm,
+  the client is supposed to provide its own subclass, implement all abstract steps, and override some of the optional
+  ones if needed (but not the template method itself).
+
+Scenario: Building a house, each type has different walls/pillars, but all have the same building process.
+
+abstract class HouseTemplate {
+    // the template method
+    public final void buildHouse() {
+        buildFoundation();// Order 1
+        buildPillars(); // Order 2
+        buildWalls(); // Order 3
+        buildWindows(); // Order 4
+        System.out.println("House is built.");
+    }
+    private void buildFoundation() {
+        System.out.println("Building foundation with cement, iron rods and sand");
+    }
+    abstract void buildWalls();
+    abstract void buildPillars();
+    // hook
+    private void buildWindows() {
+        System.out.println("Building Glass Windows");
+    }
+}
+//Concrete Implementations
+class WoodenHouse extends HouseTemplate {
+    void buildWalls() {
+        System.out.println("Building Wooden Walls");
+    }
+    void buildPillars() {
+        System.out.println("Building Pillars with Wood coating");
+    }
+}
+
+class GlassHouse extends HouseTemplate {
+    void buildWalls()     { System.out.println("Building Glass Walls"); }
+    void buildPillars()   { System.out.println("Building Pillars with glass coating"); }
+}
+
+public class Client {
+    public static void main(String[] args) {
+        HouseTemplate house = new WoodenHouse();
+        house.buildHouse(); // runs the template method
+        System.out.println("----");
+        house = new GlassHouse();
+        house.buildHouse();
+    }
+}
+
+* Template method should consist of certain steps whose order is fixed and for some of
+the methods; implementation differs from base class to subclass. Template method should
+be final.
+* Most of the times, subclasses calls methods from super class but in template pattern,
+superclass template method calls methods from subclasses, this is known as Hollywood
+Principle – “don’t call us, we’ll call you.”
+* Methods in base class with default implementation are referred as Hooks and they are
+intended to be overridden by subclasses, if you want some of the methods to be not
+overridden, you can make them final, for example in our case we can make doPack ()
+method final because if we don’t want subclasses to override it.
+
+Use Cases
+Framework design: Provide a skeleton workflow with customizable steps (e.g., Spring’s JdbcTemplate for database
+operations).
+Class libraries: Common base for file parsers, builders, reporting tools, data processing pipelines.
+Testing frameworks: JUnit TestCase pattern uses setUp and tearDown as hooks.
+
+Pros
+Increased code reuse: Invariant algorithm in one place.
+Centralized control: Algorithm steps are clearly defined and controlled.
+Extension via inheritance: Add new behaviors by extending, not modifying.
+
+Cons
+Inheritance dependence: You must extend (not compose) to vary parts—can affect flexibility.
+Rigidity: Changes in template logic affect all subclasses.
+Limited runtime flexibility: Step changes are compile-time, not dynamic.
+
+Edge Cases
+Too many hooks: If every step needs customization, the template gets complex or loses meaning.
+Changing base algorithm: Subclass extension can be tricky if the base workflow changes its step order or structure.
+Composition preferred: In modern designs, strategies or lambdas may sometimes be more flexible than templates with
+inheritance.
+
+Short Analogy
+Imagine a "recipe" (template) for a sandwich:
+Bread → always needed (base).
+Fillings and sauces → you decide (subclass).
+The overall order cannot be changed—standard sandwich, custom taste.
+
+Related
+When should I choose Template Method over Strategy pattern
+Show a simple Java code example using Template Method with hooks
+How to test Template Method implementations with unit tests
+Performance or threading concerns when using Template Method
+Refactor Template Method to use composition instead of inheritance
+How to make Template Method thread safe in Java
+Alternatives to Template Method for concurrent algorithms
+How to test Template Method implementations under concurrency
+Refactor Template Method to use composition for better threading
+Real-world examples of threading bugs caused by Template Method
+
+The Template Method pattern itself doesn't introduce inherent performance or threading problems, but how you implement
+and use it in Java—especially in enterprise or multi-threaded environments—can create issues if not handled carefully.
+
+Performance Concerns
+Extra Indirection:
+The pattern relies on inheritance and calls between the template and overridden methods, but the call overhead is
+ negligible in most normal business apps.
+Code Execution Flow:
+Performance bottlenecks usually result from heavy or inefficient concrete implementations rather than the pattern itself.
+
+Threading Concerns
+Shared State:
+If your template or subclass uses instance variables (fields) to hold intermediate computation or results, and the same
+ object is reused across threads (for example, as a singleton or Spring bean), you can encounter race conditions or
+  data corruption.
+
+Thread Safety:
+The template method and its steps should not depend on mutable shared state unless you ensure proper synchronization.
+ Immutable or stateless implementations are naturally thread-safe.
+
+Best Practices
+Stateless Instances:
+Design your template classes to be stateless or use local variables inside methods.
+
+Per-thread Instances:
+If state is necessary, instantiate a new object per request/thread instead of sharing across threads.
+
+Synchronization:
+For unavoidable shared state, use synchronization or thread-safe collections, but be mindful this can impact
+performance and increase complexity.
+
+Use Case Example
+Spring’s JdbcTemplate:
+This well-known template is stateless, so it's safe to inject as a singleton bean. All state (like SQL parameters) is
+ passed as method arguments—no shared mutable state is held between calls.
+

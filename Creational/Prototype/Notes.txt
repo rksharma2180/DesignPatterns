@@ -1,0 +1,245 @@
+Prototype is a creational design pattern that lets you copy existing objects without making your code dependent on
+their classes.
+1. Not all objects can be copied traditional way because some of the object’s fields may be private and not
+visible from outside of the object itself.
+2. Since you have to know the object’s class to create a duplicate, your code becomes dependent on that class.
+3. Sometimes you only know the interface that the object follows, but not its concrete class, when, for example, a
+parameter in a method accepts any objects that follow some interface.
+
+Prototype design pattern mandates that the Object which we are copying should provide the copying feature. It should
+not be done by any other class. The Prototype pattern delegates the cloning process to the actual objects that are being
+cloned. The pattern declares a common interface for all objects that support cloning. This interface lets you clone an
+object without coupling your code to the class of that object. Usually, such an interface contains just a single clone
+method.
+
+Normally in Java, if we’d like to use cloning (i.e., the prototype pattern), we can utilize the clone () method and the
+Cloneable interface. By default, clone () performs a shallow copy. Serializable can be used to simplify deep copying.
+
+The implementation of the clone method is very similar in all classes. The method creates an object of the current class
+and carries over all of the field values of the old object into the new one. You can even copy private fields because
+most programming languages let objects access private fields of other objects that belong to the same class.
+
+An object that supports cloning is called a prototype. When your objects have dozens of fields and hundreds of possible
+configurations, cloning them might serve as an alternative to subclassing.
+
+Key Components
+Prototype Interface: Declares a clone() method for duplicating objects. In Java, this is often achieved via the
+Cloneable interface.
+Concrete Prototype: Actual implementations of the prototype interface, which define how cloning should work for each
+type.
+Client: Requests new instances by invoking the clone() method on a prototype, without needing to know the specific class.
+
+Usage in JDK: java.lang.Object#clone ()
+Prototype design pattern is used in scenarios where application needs to create a number of instances of a class,
+which has almost same state or differs very little.
+
+Use prototype pattern when a system should be independent of how its products are created, composed and represented
+and:
+When the class to be instantiated is specified at runtime or
+To avoid building a hierarchy of factory classes or
+It is more convenient to clone an object rather than creating a new object.
+
+Benefits of prototype pattern are:
+Adding and removing products at runtime.
+Specifying new objects by varying values.
+Specifying new objects by varying structure.
+Reduced subclassing.
+Configuring an application with classes dynamically.
+
+Main drawback of prototype pattern is that each sub class of Prototype must implement the clone operation.
+
+Example
+abstract class AbstractProduct implements Cloneable
+{
+	public static AbstractProduct thePrototype;
+	public static AbstractProduct makeProduct()
+	{
+		try
+		{
+			return (AbstractProduct) thePrototype.clone();
+	   	 }
+		catch(CloneNotSupportedException e)
+		{
+			return null;
+	   	 }
+	}
+}
+
+class ConcreteProductA extends AbstractProduct { }
+
+class ConcreteProductB extends AbstractProduct { }
+
+public class PrototypeDemo
+{
+	public static void main(String[] args)
+	{
+		AbstractProduct.thePrototype = new ConcreteProductA();
+		AbstractProduct product = AbstractProduct.makeProduct();
+		System.out.println(product);
+	}
+}
+
+Using a prototype manager
+When the application uses a lot of prototypes that can be created and destroyed dynamically, a registry of available
+prototypes should be kept. This registry is called the prototype manager and it should implement operations for
+managing registered prototypes like registering a prototype under a certain key, searching for a prototype with a given
+ key, removing one from the register, etc.
+
+The clients will use the interface of the prototype manager to handle prototypes at run-time and will ask for permission
+ before using the Clone() method.
+
+There is not much difference between an implementation of a prototype which uses a prototype manager and a factory
+method implemented using class registration mechanism. Maybe the only difference consists in the performance.
+
+public abstract class Shape implements Cloneable
+{
+	private String id;
+	protected String type;
+   	abstract void draw();
+   	public String getType()
+	{
+		return type;
+	}
+	public String getId()
+	{
+	  return id;
+	}
+	public void setId(String id)
+	{
+		this.id = id;
+	}
+	public Object clone()
+	{
+		Object clone = null;
+		try
+		{
+			clone = super.clone();
+		}
+		catch (CloneNotSupportedException e)
+		{
+			e.printStackTrace();
+		}
+		return clone;
+	}
+}
+
+public class Rectangle extends Shape
+{
+	public Rectangle()
+	{
+		type = "Rectangle";
+	}
+	@Override
+	public void draw()
+	{
+		System.out.println("Inside Rectangle::draw() method.");
+	}
+}
+
+public class Square extends Shape
+{
+	public Square()
+	{
+		type = "Square";
+	}
+	@Override
+	public void draw()
+	{
+		System.out.println("Inside Square::draw() method.");
+	}
+}
+
+public class Circle extends Shape
+{
+	public Circle()
+	{
+		type = "Circle";
+	}
+	@Override
+	public void draw()
+	{
+		System.out.println("Inside Circle::draw() method.");
+	}
+}
+
+import java.util.Hashtable;
+public class ShapeCache
+{
+	private static Hashtable<String, Shape> shapeMap = new Hashtable<String, Shape>();
+	public static Shape getShape(String shapeId)
+	{
+		Shape cachedShape = shapeMap.get(shapeId);
+		return (Shape) cachedShape.clone();
+	}
+	public static void loadCache()
+	{
+		Circle circle = new Circle();
+		circle.setId("1");
+		shapeMap.put(circle.getId(),circle);
+		Square square = new Square();
+		square.setId("2");
+		shapeMap.put(square.getId(),square);
+		Rectangle rectangle = new Rectangle();
+		rectangle.setId("3");
+		shapeMap.put(rectangle.getId(),rectangle);
+	}
+}
+
+public class PrototypePatternDemo
+{
+	public static void main(String[] args)
+	{
+		ShapeCache.loadCache();
+		Shape clonedShape = (Shape) ShapeCache.getShape("1");
+		System.out.println("Shape : " + clonedShape.getType());
+		Shape clonedShape2 = (Shape) ShapeCache.getShape("2");
+		System.out.println("Shape : " + clonedShape2.getType());
+		Shape clonedShape3 = (Shape) ShapeCache.getShape("3");
+		System.out.println("Shape : " + clonedShape3.getType());
+	}
+}
+
+A small discussion appears when talking about how deep or shallow a clone should be: a deep clone clones the instance
+variables in the cloning object while a shallow clone shares the instance variables between the clone and the original.
+
+Usually, a shallow clone is enough and very simple, but cloning complex prototypes should use deep clones so the clone
+and the original are independent, a deep clone needing its components to be the clones of the complex object’s
+components.
+
+Best Practices
+Clone all mutable reference fields: If an object field is mutable (like a list or another custom class), ensure it is
+also deeply cloned in the overridden clone() method.​​
+
+Immutable fields: For fields that are immutable (such as String or boxed primitives), the reference itself is sufficient
+, as these cannot be modified after creation.
+
+Serializable Deep Clone (Alternative): Serialization can also be used to create a deep copy, particularly for complex
+graphs. However, manual deep clone via overriding clone() is the standard in the Prototype pattern.
+
+class Address implements Cloneable {
+    String city;
+    public Address(String city) { this.city = city; }
+
+    @Override
+    protected Address clone() throws CloneNotSupportedException {
+        return (Address) super.clone(); // No reference fields, so default is fine
+    }
+}
+
+class Person implements Cloneable {
+    String name;
+    Address address;
+
+    public Person(String name, Address address) {
+        this.name = name;
+        this.address = address;
+    }
+
+    @Override
+    protected Person clone() throws CloneNotSupportedException {
+        Person cloned = (Person) super.clone(); // Shallow copy
+        cloned.address = address.clone(); // Deep copy of Address
+        return cloned;
+    }
+}
+

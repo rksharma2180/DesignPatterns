@@ -37,7 +37,7 @@ class Factory {
     public Factory register(String key, Supplier<Notifier> sup) {
         registry.put(key, sup); return this;
     }
-    public Notifier create(String key) {
+    public Notifier getNotifier(String key) {
         Supplier<Notifier> s = registry.get(key);
         if (s == null) throw new IllegalArgumentException("Unknown: " + key);
         return s.get();
@@ -166,10 +166,13 @@ class XmlParserCreator extends ParserCreator {
 // Usage
 class Demo {
     public static void main(String[] args) {
-        ParserCreator c = new JsonParserCreator();
+        ParserCreator c = new JsonParserCreator(); //Wrapper constructor call
         System.out.println(c.process("{...}"));
     }
 }
+
+Xerox Example (Real)
+
 Edge cases and pitfalls
 “God factory” anti-pattern: a monolithic factory with large switch/if blocks becomes hard to maintain as product
 variants grow; refactor into Factory Method or Abstract Factory when families emerge.

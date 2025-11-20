@@ -7,7 +7,8 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ReflectTest {
 
-    public static void main(String[] args) throws InvocationTargetException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+    public static void main(String[] args)
+            throws InvocationTargetException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 
         Employee emp = Employee.getInstance();
         System.out.println(emp);

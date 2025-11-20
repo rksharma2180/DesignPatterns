@@ -1,0 +1,99 @@
+The Visitor pattern in Java is a behavioral design pattern that lets you separate algorithms from the
+objects on which they operate. It allows one to add new operations (Into a separate class) to object
+structures without modifying the structures themselves.The original object that had to perform the behavior
+is now passed to one of the visitor’s methods as an argument, providing the method access to all necessary data
+contained within the object.
+
+In other way
+The Visitor pattern is a behavioral design pattern that lets you add new operations to a set of objects without changing
+ their classes. It separates the algorithm from the objects it operates on, allowing the addition of new functionality
+  without modifying existing codeI
+
+Core Concepts
+Visitor Interface: Defines visit methods for each type of concrete element in the object structure.
+Element Interface: Declares an accept(Visitor visitor) method, allowing a visitor to access the element.
+Concrete Elements: Classes that implement the element interface and define the accept() method to call the visitor's
+corresponding visit() method.
+Concrete Visitors: Implement specific operations to be performed on the different elements.
+
+Explanation in Easiest Way
+Problem:
+You have many different types of objects (elements), and you want to perform different operations on them. If you keep
+adding methods for each operation inside the object classes, they get cluttered and hard to maintain.
+
+Solution:
+Create a separate Visitor object that "visits" each element and performs the operation there. The elements just accept
+the visitor.
+
+How it works (Step by Step):
+Define an Element (Object) interface with an accept(Visitor) method.
+Implement concrete elements that override accept to call visitor.visit(this).
+Define a Visitor interface that declares a visit (Actual operation going to be performed on the elements) method for
+each element type.
+Implement concrete visitors to define different operations for each element type.
+Client code passes the visitor to elements, which trigger the appropriate operation.
+
+// Visitor interface defining visit methods for each element
+interface Visitor {
+    void visit(Circle circle);
+    void visit(Square square);
+}
+
+// Element interface with accept method
+interface Shape {
+    void accept(Visitor visitor);
+}
+
+// Concrete element: Circle
+class Circle implements Shape {
+    @Override
+    public void accept(Visitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+// Concrete element: Square
+class Square implements Shape {
+    @Override
+    public void accept(Visitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+// Concrete visitor: performs area calculation
+class AreaCalculator implements Visitor {
+    @Override
+    public void visit(Circle circle) {
+        System.out.println("Calculating area of Circle");
+    }
+
+    @Override
+    public void visit(Square square) {
+        System.out.println("Calculating area of Square");
+    }
+}
+
+// Client uses visitor on elements
+public class VisitorDemo {
+    public static void main(String[] args) {
+        Shape[] shapes = {new Circle(), new Square()};
+        Visitor areaCalculator = new AreaCalculator();
+
+        for (Shape shape : shapes) {
+            shape.accept(areaCalculator);
+        }
+    }
+}
+
+Use Cases
+Performing operations on complex object structures (like composite objects).
+Adding new behaviors without modifying existing element classes.
+When you have a stable set of elements but varying operations.
+Compiler design - syntax tree traversal.
+Document processing, graphics rendering.
+
+Edge Cases and Limitations
+Adding a new element type requires changing all visitor interfaces and implementations.
+Can add complexity with many visitor and element classes.
+Sometimes double dispatch (achieved via accept and visit) can be confusing.
+If your object structure changes frequently, visitor pattern can be cumbersome.

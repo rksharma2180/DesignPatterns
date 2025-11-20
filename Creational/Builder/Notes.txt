@@ -369,15 +369,21 @@ public class Demo {
 }
 Edge Cases in Builder Pattern
 Immutability: Builder pattern helps build immutable objects by setting fields once during construction.​
+
 Mandatory Fields: It's crucial to distinguish and enforce mandatory fields (typically via the builder’s constructor) to
 avoid incomplete object creation.​
+
 Optional Fields and Defaults: If some parameters are not set, the builder should provide sensible defaults to avoid
 potential bugs.
+
 Validation: Validate field combinations inside build() method, or throw exceptions for invalid object states
 (e.g., missing required fields or invalid optional values).
+
 Misuse Prevention: Builder’s build() method should check for correct configuration and throw exceptions for invalid
 setups.
+
 Thread Safety: Builders are usually not thread-safe. Avoid sharing Builder instances across threads.​
+
 Chaining Pitfalls: For fluent APIs, always return this to enable chaining.
 
 Pizza pizza = new Pizza.PizzaBuilder("Large") //Size is mandatory
@@ -387,6 +393,7 @@ Pizza pizza = new Pizza.PizzaBuilder("Large") //Size is mandatory
     .build();
 
 Advanced Builder Pattern Interview Questions
+
 Design and Application
 In what architectural scenarios would you prefer the Builder pattern over Factory or Abstract Factory, and why?
 Explain how the Builder pattern enhances the construction of complex, immutable domain models.
